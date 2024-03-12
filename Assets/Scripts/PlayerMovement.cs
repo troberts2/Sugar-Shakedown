@@ -1,14 +1,11 @@
 using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
     //Movement
-    public float moveSpeed = 5f;
+    private float moveSpeed = 5f;
     public float walkSpeed = 5f;
 
     //Dash
@@ -25,7 +22,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private GameObject crossHair;
 
     //Input Control
-    private PlayerControls playerControls;
+    internal PlayerControls playerControls;
     private InputAction move;
     private InputAction dodge;
     private InputAction look;
