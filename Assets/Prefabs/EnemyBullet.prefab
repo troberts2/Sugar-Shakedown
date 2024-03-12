@@ -11,10 +11,10 @@ GameObject:
   - component: {fileID: 4890527299069458188}
   - component: {fileID: 5102911923223019369}
   - component: {fileID: 2422130442444155685}
-  - component: {fileID: -2943288464290531751}
-  m_Layer: 10
-  m_Name: Bullet
-  m_TagString: PlayerBullet
+  - component: {fileID: 4563914241152556944}
+  m_Layer: 9
+  m_Name: EnemyBullet
+  m_TagString: EnemyBullet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -76,7 +76,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 0.36303523, b: 0.09119487, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -113,7 +113,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!58 &-2943288464290531751
+--- !u!58 &4563914241152556944
 CircleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -36,6 +37,10 @@ public class PlayerMovement : MonoBehaviour
     }
     public MovementState state = MovementState.moving;
     private bool iFrames = false;
+    [SerializeField] private float maxHp = 10f;
+    private float hp;
+    [SerializeField] private Image playerHealthBar;
+    [SerializeField] private float knockbackForce = 2f;
 
     private void OnEnable() {
         move = playerControls.Player.Move;
@@ -63,11 +68,13 @@ public class PlayerMovement : MonoBehaviour
 
     private void Start() {
         rb = GetComponent<Rigidbody2D>();
+        hp = maxHp;
     }
 
     // Update is called once per frame
     void Update()
     {
+        playerHealthBar.fillAmount = hp/maxHp;
         SpeedControl();
         StateHandler();
         if (dashCdTimer > 0) dashCdTimer -= Time.deltaTime;
@@ -97,7 +104,7 @@ public class PlayerMovement : MonoBehaviour
     {
         //Mode - Hit
         if(state == MovementState.stunned){
-            desiredMoveSpeed = 0;
+            desiredMoveSpeed = dashSpeed;
         }
         // Mode - Dodge
         else if (state == MovementState.dodging)
@@ -115,14 +122,6 @@ public class PlayerMovement : MonoBehaviour
         else{
             desiredMoveSpeed = walkSpeed;
         }
-
-
-        if(iFrames){
-            transform.GetChild(0).GetComponent<SpriteRenderer>().color = Color.green;
-        }else {
-            transform.GetChild(0).GetComponent<SpriteRenderer>().color = Color.white;
-        }
-
 
         bool desiredMoveSpeedHasChanged = desiredMoveSpeed != lastDesiredMoveSpeed;
         if (lastState == MovementState.dodging && dashCdTimer <= 0) keepMomentum = true;
@@ -171,7 +170,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void MovePlayer(){
         //Do not move if dodging
-        if(state == MovementState.dodging) return;
+        if(state == MovementState.dodging || state == MovementState.stunned) return;
 
         Vector2 moveDirection = move.ReadValue<Vector2>();
 
@@ -185,6 +184,7 @@ public class PlayerMovement : MonoBehaviour
 
         state = MovementState.dodging;
         iFrames = true;
+        transform.GetChild(0).GetComponent<SpriteRenderer>().color = Color.green;
 
         Vector2 dashDir = move.ReadValue<Vector2>();
         Vector2 forceToApply = dashDir * dashForce;
@@ -204,6 +204,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void ResetDash()
     {
+        transform.GetChild(0).GetComponent<SpriteRenderer>().color = Color.white;
         state = MovementState.moving;
         iFrames = false;
     }
@@ -224,7 +225,27 @@ public class PlayerMovement : MonoBehaviour
             aim = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             crossHair.transform.position = aim;
         }
-
-
+    }
+    void OnCollisionEnter2D(Collision2D collision){
+        if(collision.collider.CompareTag("Enemy") || collision.collider.CompareTag("EnemyBullet") && !iFrames){
+            state = MovementState.stunned;
+            hp--;
+            if(hp < 1){
+                //Lose
+            }
+            iFrames = true;
+            transform.GetChild(0).GetComponent<SpriteRenderer>().color = Color.red;
+            Vector2 knockbackDir = (transform.position - collision.collider.transform.position).normalized;
+            rb.velocity = Vector2.zero;
+            rb.AddForce(knockbackDir * knockbackForce, ForceMode2D.Impulse);
+            if(collision.collider.CompareTag("EnemyBullet")) Destroy(collision.gameObject);
+            Invoke(nameof(ResetIFrames), .25f);
+        }
+    }
+    void ResetIFrames(){
+        transform.GetChild(0).GetComponent<SpriteRenderer>().color = Color.white;
+        rb.velocity = Vector2.zero;
+        iFrames = false;
+        state = MovementState.moving;
     }
 }
