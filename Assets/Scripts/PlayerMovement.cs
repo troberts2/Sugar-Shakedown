@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -36,11 +37,16 @@ public class PlayerMovement : MonoBehaviour
         stunned
     }
     public MovementState state = MovementState.moving;
+
+
+    //Health - Combat
     private bool iFrames = false;
     [SerializeField] private float maxHp = 10f;
     private float hp;
     [SerializeField] private Image playerHealthBar;
     [SerializeField] private float knockbackForce = 2f;
+    [SerializeField] private int sugarCollected = 0;
+    [SerializeField] private TextMeshProUGUI sugarText;
 
     private void OnEnable() {
         move = playerControls.Player.Move;
@@ -238,9 +244,17 @@ public class PlayerMovement : MonoBehaviour
             Vector2 knockbackDir = (transform.position - collision.collider.transform.position).normalized;
             rb.velocity = Vector2.zero;
             rb.AddForce(knockbackDir * knockbackForce, ForceMode2D.Impulse);
-            if(collision.collider.CompareTag("EnemyBullet")) Destroy(collision.gameObject);
+            if(collision.collider.CompareTag("EnemyBullet")) collision.gameObject.SetActive(false);
             Invoke(nameof(ResetIFrames), .25f);
         }
+    }
+
+    private void OnTriggerEnter2D(Collider2D other) {
+        if(other.CompareTag("Sugar")){
+            sugarCollected += Random.Range(1, 3);
+            sugarText.text = "" + sugarCollected;
+            Destroy(other.gameObject);
+        }    
     }
     void ResetIFrames(){
         transform.GetChild(0).GetComponent<SpriteRenderer>().color = Color.white;

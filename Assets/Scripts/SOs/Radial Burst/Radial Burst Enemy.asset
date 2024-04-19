@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9996b13fe665b704a84f7b91f7cec304, type: 3}
+  m_Name: Radial Burst Enemy
+  m_EditorClassIdentifier: 
+  enemyName: Radial Burst
+  enemyMaxHp: 5
+  secondsBetweenAttacks: 5
+  bulletPatterns:
+  - {fileID: 11400000, guid: f424f94da9850f4419681469eea319af, type: 2}
+  - {fileID: 11400000, guid: 6f3becd8dcfeb5145a068d97dbf62d70, type: 2}

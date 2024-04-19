@@ -8,6 +8,7 @@ public class Enemy : MonoBehaviour
 {
     private NavMeshAgent agent;
     [SerializeField] private float moveSpeed;
+    [SerializeField] private float rotationSpeed = 20f;
     [SerializeField] private Transform target;
     [SerializeField] private float visionDistance = 10f;
     [SerializeField] private float activeDistance = 20f;
@@ -15,11 +16,21 @@ public class Enemy : MonoBehaviour
     [SerializeField] private LayerMask ignoreLayers;
     [SerializeField] private GameObject enemyBullet;
     [SerializeField] private float bulletSpeed;
-    [SerializeField] private float attackCd = 2f;
+    [SerializeField] private GameObject sugar;
     private float attackCdTimer;
     [SerializeField] private float maxHp = 3f;
     private float hp;
     private Color originalColor;
+
+    public enum EnemyState{
+        moving,
+        attacking,
+        stunned
+    }
+
+    public EnemyState state = EnemyState.moving;
+    [SerializeField] internal EnemySettings enemySettings;
+    internal BulletPatternTemplate currentPattern;
     // Start is called before the first frame update
     void Start()
     {
@@ -27,8 +38,11 @@ public class Enemy : MonoBehaviour
         agent.updateRotation = false;
         agent.updateUpAxis = false;
         agent.stoppingDistance = maxDistance;
+        agent.speed = moveSpeed;
+        maxHp = enemySettings.enemyMaxHp;
         hp = maxHp;
         originalColor = transform.GetChild(0).GetComponent<SpriteRenderer>().color;
+        target = FindObjectOfType<PlayerMovement>().transform;
     }
 
     // Update is called once per frame
@@ -38,25 +52,40 @@ public class Enemy : MonoBehaviour
 
         if(attackCdTimer >= 0) attackCdTimer -= Time.deltaTime;
 
-        if(hit && hit.collider.CompareTag("Player")){
-            Attack();
+        if(state != EnemyState.attacking){
+            FollowPlayerOrientation();
+            if(maxDistance != 0 && Vector2.Distance(transform.position, target.position) < maxDistance){
+                transform.position = Vector2.MoveTowards(transform.position, target.position, -moveSpeed * Time.deltaTime);
+            }
+            else if(hit && hit.collider.CompareTag("Player")){
+                Attack();
+            }
+            else if(activeDistance != 0 && Vector2.Distance(transform.position, target.position) < activeDistance){
+                agent.SetDestination(target.position);
+            } 
         }
-        else if(maxDistance != 0 && Vector2.Distance(transform.position, target.position) < maxDistance){
-            transform.position = Vector2.MoveTowards(transform.position, target.position, -moveSpeed * Time.deltaTime);
-        }
-        else if(activeDistance != 0 && Vector2.Distance(transform.position, target.position) < activeDistance){
-            agent.SetDestination(target.position);
-        }
+
         
+    }
+    
+    void FollowPlayerOrientation(){
+        float angle = Mathf.Atan2(target.position.y - transform.position.y, target.position.x -transform.position.x ) * Mathf.Rad2Deg;
+        Quaternion targetRotation = Quaternion.Euler(new Vector3(0, 0, angle));
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
     }
 
     void Attack(){
         if(attackCdTimer > 0) return;
-        attackCdTimer = attackCd;
-        Debug.Log("Attack");
-        GameObject bullet = Instantiate(enemyBullet, transform.position, Quaternion.identity);
-        Vector2 bulletDir = (target.position - transform.position).normalized;
-        bullet.GetComponent<Rigidbody2D>().AddForce(bulletDir * bulletSpeed, ForceMode2D.Impulse);
+
+        if(enemySettings.bulletPatterns.Length != 0){
+            currentPattern = new BulletPatternTemplate(enemySettings.bulletPatterns[Random.Range(0, enemySettings.bulletPatterns.Length)]);
+        }
+
+        attackCdTimer = (currentPattern.repeatTimes * currentPattern.fireRate) + enemySettings.secondsBetweenAttacks;
+        
+        if(GetComponent<RadialBullets>() != null){
+            StartCoroutine(GetComponent<RadialBullets>().ShootBullets(currentPattern));
+        }
     }
 
     void OnCollisionEnter2D(Collision2D collider){
@@ -69,7 +98,10 @@ public class Enemy : MonoBehaviour
     void TakeDamage(float amount){
         hp -= amount;
         if(hp < 1){
-            Destroy(gameObject);
+            //Enemy dies
+            transform.GetChild(0).GetComponent<SpriteRenderer>().color = Color.white;
+            Instantiate(sugar, transform.position, Quaternion.identity);
+            Destroy(gameObject, .1f);
         }else{
             transform.GetChild(0).GetComponent<SpriteRenderer>().color = Color.white;
             Invoke(nameof(ResetColor), .1f);

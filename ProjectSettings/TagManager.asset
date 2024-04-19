@@ -7,6 +7,8 @@ TagManager:
   - PlayerBullet
   - Enemy
   - EnemyBullet
+  - Ground
+  - Sugar
   layers:
   - Default
   - TransparentFX
