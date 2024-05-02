@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class CorridorFirstDungeonGeneration : SimpleRandomWalkDungeonGenerator
 {
-    [SerializeField] private int corridorLength = 14, corridorCount =5;
+    [SerializeField] private int corridorLength = 14;
     [Range(0.1f, 1)]
     [SerializeField] private float roomPercent = .8f;
 
