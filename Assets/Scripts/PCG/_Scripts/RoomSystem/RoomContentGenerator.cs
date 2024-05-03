@@ -22,6 +22,7 @@ public class RoomContentGenerator : MonoBehaviour
     //private CinemachineVirtualCamera cinemachineCamera;
 
     public UnityEvent RegenerateDungeon;
+    public UnityEvent FinishedGeneratingContent;
 
     private void Update()
     {
@@ -50,6 +51,7 @@ public class RoomContentGenerator : MonoBehaviour
             if(item != null)
                 item.transform.SetParent(itemParent, false);
         }
+        FinishedGeneratingContent?.Invoke();
     }
 
     private void SelectPlayerSpawnPoint(DungeonData dungeonData)
