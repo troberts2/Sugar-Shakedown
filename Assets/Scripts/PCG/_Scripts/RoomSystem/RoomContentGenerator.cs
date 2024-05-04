@@ -122,26 +122,10 @@ public class RoomContentGenerator : MonoBehaviour
 
     private void GenerateBossRoom(DungeonData dungeonData)
     {
-        // Choose a random room index
-        int randomRoomIndex = UnityEngine.Random.Range(0, dungeonData.roomsDictionary.Count);
-        Vector2Int bossRoomCenter = dungeonData.roomsDictionary.Keys.ElementAt(randomRoomIndex);
+        Vector2Int bossRoomCenter = dungeonData.bossRoomCenter;
 
-        // Define the size of the boss room (e.g., 5x5)
-        int roomSize = 5; // Adjust size as needed
+        HashSet<Vector2Int> bossRoomFloor = dungeonData.bossRoomPositions;
 
-        // Calculate the corner positions of the boss room
-        Vector2Int bossRoomBottomLeft = new Vector2Int(bossRoomCenter.x - roomSize / 2, bossRoomCenter.y - roomSize / 2);
-        Vector2Int bossRoomTopRight = new Vector2Int(bossRoomCenter.x + roomSize / 2, bossRoomCenter.y + roomSize / 2);
-
-        // Generate the boss room floor
-        HashSet<Vector2Int> bossRoomFloor = new HashSet<Vector2Int>();
-        for (int x = bossRoomBottomLeft.x; x <= bossRoomTopRight.x; x++)
-        {
-            for (int y = bossRoomBottomLeft.y; y <= bossRoomTopRight.y; y++)
-            {
-                bossRoomFloor.Add(new Vector2Int(x, y));
-            }
-        }
 
         // Process the boss room
         List<GameObject> bossRoomObjects = bossRoom.ProcessRoom(

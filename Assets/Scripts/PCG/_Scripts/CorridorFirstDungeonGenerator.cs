@@ -19,7 +19,10 @@ public class CorridorFirstDungeonGenerator : SimpleRandomWalkDungeonGenerator
     private Dictionary<Vector2Int, HashSet<Vector2Int>> roomsDictionary 
         = new Dictionary<Vector2Int, HashSet<Vector2Int>>();
     
-    private HashSet<Vector2Int> floorPositions, corridorPositions;
+    private HashSet<Vector2Int> floorPositions, corridorPositions, bossRoomPositions;
+    private Vector2Int bossRoomCenter;
+
+    private DungeonData data;
 
     //Gizmos Data
     private List<Color> roomColors = new List<Color>();
@@ -32,11 +35,13 @@ public class CorridorFirstDungeonGenerator : SimpleRandomWalkDungeonGenerator
     protected override void RunProceduralGeneration()
     {
         CorridorFirstGeneration();
-        DungeonData data = new DungeonData
+        data = new DungeonData
         {
             roomsDictionary = this.roomsDictionary,
             corridorPositions = this.corridorPositions,
-            floorPositions = this.floorPositions
+            floorPositions = this.floorPositions,
+            bossRoomCenter = this.bossRoomCenter,
+            bossRoomPositions = this.bossRoomPositions
         };
         OnDungeonFloorReady?.Invoke(data);
     }
@@ -57,7 +62,7 @@ public class CorridorFirstDungeonGenerator : SimpleRandomWalkDungeonGenerator
 
     private void GenerateRooms(HashSet<Vector2Int> potentialRoomPositions)
     {
-        HashSet<Vector2Int> roomPositions = CreateRooms(potentialRoomPositions);
+        HashSet<Vector2Int> roomPositions = CreateRooms(potentialRoomPositions, true);
 
         List<Vector2Int> deadEnds = FindAllDeadEnds(floorPositions);
 
@@ -114,22 +119,66 @@ public class CorridorFirstDungeonGenerator : SimpleRandomWalkDungeonGenerator
         return deadEnds;
     }
 
-    private HashSet<Vector2Int> CreateRooms(HashSet<Vector2Int> potentialRoomPositions)
+    private HashSet<Vector2Int> CreateRooms(HashSet<Vector2Int> potentialRoomPositions, bool generateBossRoom)
     {
         HashSet<Vector2Int> roomPositions = new HashSet<Vector2Int>();
         int roomToCreateCount = Mathf.RoundToInt(potentialRoomPositions.Count * roomPercent);
 
         List<Vector2Int> roomsToCreate = potentialRoomPositions.OrderBy(x => Guid.NewGuid()).Take(roomToCreateCount).ToList();
         ClearRoomData();
+
         foreach (var roomPosition in roomsToCreate)
         {
-            var roomFloor = RunRandomWalk(randomWalkParameters, roomPosition);
-            
-            SaveRoomData(roomPosition, roomFloor);
-            roomPositions.UnionWith(roomFloor);
+            // Check if boss room should be generated and if it hasn't been generated yet
+            if (!generateBossRoom || roomPosition != roomsToCreate.Last())
+            {
+                // Generate regular room
+                var roomFloor = RunRandomWalk(randomWalkParameters, roomPosition);
+                SaveRoomData(roomPosition, roomFloor);
+                roomPositions.UnionWith(roomFloor);
+                
+            }
+            if(generateBossRoom){
+                Vector2Int bossRoomPosition = roomsToCreate.Last();
+                HashSet<Vector2Int> bossRoomFloor = GenerateBossRoom(bossRoomPosition);
+                roomPositions.UnionWith(bossRoomFloor);
+            }
         }
         return roomPositions;
     }
+    private HashSet<Vector2Int> GenerateBossRoom(Vector2Int roomPos)
+    {
+
+        Vector2Int bossRoomCenterPos = roomPos;
+
+        // Define the size of the boss room (e.g., 5x5)
+        int roomSize = 15; // Adjust size as needed
+
+
+        HashSet<Vector2Int> bossRoomFloor = new HashSet<Vector2Int>();
+
+        // Calculate the corner positions of the boss room
+        int halfSize = roomSize / 2;
+        Vector2Int bossRoomBottomLeft = bossRoomCenterPos - new Vector2Int(halfSize, halfSize);
+        Vector2Int bossRoomTopRight = bossRoomCenterPos + new Vector2Int(halfSize, halfSize);
+
+        // Generate the boss room floor
+        for (int x = bossRoomBottomLeft.x; x <= bossRoomTopRight.x; x++)
+        {
+            for (int y = bossRoomBottomLeft.y; y <= bossRoomTopRight.y; y++)
+            {
+                Vector2Int position = new Vector2Int(x, y);
+                bossRoomFloor.Add(position);
+            }
+        }
+        bossRoomCenter = bossRoomCenterPos;
+        bossRoomPositions = bossRoomFloor;
+        
+
+        return bossRoomFloor;
+    }
+
+
 
     private void ClearRoomData()
     {
