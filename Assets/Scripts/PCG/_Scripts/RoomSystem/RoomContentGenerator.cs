@@ -8,12 +8,16 @@ using UnityEngine.Events;
 public class RoomContentGenerator : MonoBehaviour
 {
     [SerializeField]
-    private RoomGenerator playerRoom, defaultRoom;
+    private RoomGenerator playerRoom, defaultRoom, bossRoom, lootRoom;
 
     List<GameObject> spawnedObjects = new List<GameObject>();
 
     [SerializeField]
     private GraphTest graphTest;
+
+    [Min(0)]
+    [SerializeField] private int numOfLootRooms = 2; 
+    [SerializeField]GameObject bossPrefab;
 
 
     public Transform itemParent;
@@ -44,6 +48,8 @@ public class RoomContentGenerator : MonoBehaviour
         spawnedObjects.Clear();
 
         SelectPlayerSpawnPoint(dungeonData);
+        SelectLootRooms(dungeonData);
+        GenerateBossRoom(dungeonData);
         SelectEnemySpawnPoints(dungeonData);
 
         foreach (GameObject item in spawnedObjects)
@@ -96,5 +102,61 @@ public class RoomContentGenerator : MonoBehaviour
 
         }
     }
+    private void SelectLootRooms(DungeonData dungeonData)
+    {
+        List<Vector2Int> lootRoomSpawnPoints = new List<Vector2Int>();
+        for (int i = 0; i < numOfLootRooms; i++)
+        {
+            int randomRoomIndex = UnityEngine.Random.Range(0, dungeonData.roomsDictionary.Count);
+            lootRoomSpawnPoints.Add(dungeonData.roomsDictionary.Keys.ElementAt(randomRoomIndex));
+            Vector2Int roomIndex = dungeonData.roomsDictionary.Keys.ElementAt(randomRoomIndex);
+            List<GameObject> placedPrefabs = lootRoom.ProcessRoom(
+            lootRoomSpawnPoints[i],
+            dungeonData.roomsDictionary.Values.ElementAt(randomRoomIndex),
+            dungeonData.GetRoomFloorWithoutCorridors(roomIndex)
+            );
+            spawnedObjects.AddRange(placedPrefabs);
+            dungeonData.roomsDictionary.Remove(roomIndex);
+        }
+    }
+
+    private void GenerateBossRoom(DungeonData dungeonData)
+    {
+        // Choose a random room index
+        int randomRoomIndex = UnityEngine.Random.Range(0, dungeonData.roomsDictionary.Count);
+        Vector2Int bossRoomCenter = dungeonData.roomsDictionary.Keys.ElementAt(randomRoomIndex);
+
+        // Define the size of the boss room (e.g., 5x5)
+        int roomSize = 5; // Adjust size as needed
+
+        // Calculate the corner positions of the boss room
+        Vector2Int bossRoomBottomLeft = new Vector2Int(bossRoomCenter.x - roomSize / 2, bossRoomCenter.y - roomSize / 2);
+        Vector2Int bossRoomTopRight = new Vector2Int(bossRoomCenter.x + roomSize / 2, bossRoomCenter.y + roomSize / 2);
+
+        // Generate the boss room floor
+        HashSet<Vector2Int> bossRoomFloor = new HashSet<Vector2Int>();
+        for (int x = bossRoomBottomLeft.x; x <= bossRoomTopRight.x; x++)
+        {
+            for (int y = bossRoomBottomLeft.y; y <= bossRoomTopRight.y; y++)
+            {
+                bossRoomFloor.Add(new Vector2Int(x, y));
+            }
+        }
+
+        // Process the boss room
+        List<GameObject> bossRoomObjects = bossRoom.ProcessRoom(
+            bossRoomCenter,
+            bossRoomFloor,
+            bossRoomFloor // Use bossRoomFloor as both room floor and room walls
+        );
+
+
+        // Add boss room objects to the list of spawned objects
+        spawnedObjects.AddRange(bossRoomObjects);
+
+        // Remove the boss room from the dungeon data
+        dungeonData.roomsDictionary.Remove(bossRoomCenter);
+    }
+
 
 }
